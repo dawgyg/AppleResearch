@@ -1,0 +1,59 @@
+APPLE SECURITY BOUNTY — SUBMISSION DRAFT (plain text, paste field-by-field; AWAITING USER OK TO FILE)
+Honest tier note: vulnerable on current shipping 26.5.1, but 27.0 beta already adds the bound ->
+DUP RISK (Apple likely knew). File for current-shipping impact + CVE credit; set bounty expectation low.
+
+[1] Affected Product:
+Kernel (IOKit driver: AppleJPEGDriver)
+
+[2] Title (<100 chars):
+AppleJPEGDriver startDecoderExt unbounded memmove: unprivileged kernel OOB read / panic
+
+[3] What's needed to reproduce (<200 chars):
+Run the included PoC binary as a normal unprivileged user (uid 501). No entitlement. It opens
+AppleJPEGDriver and calls external method selector 5 with an oversized length, panicking the kernel.
+
+[4] Description:
+AppleJPEGDriverUserClient is openable by any unprivileged process (no entitlement). External method
+selector 5 (AppleJPEGDriver::startDecoderExt) reads a 32-bit length from the caller-supplied
+structure-input at offset 0x7c and uses it directly as the size of a memmove whose source is
+structure-input+0x84, with no upper-bound check against the fixed dispatched structure-input size
+(0x1000). Any length greater than 0x1000-0x84 (0xf7c) causes the kernel to read past the
+structure-input allocation into adjacent kernel memory; a sufficiently large length runs off the end
+of mapped memory and triggers a Kernel data abort (read translation fault) -> panic. Selector 7
+(startDecoder2024) has the same flaw (bound 0xda0-0x84 = 0xd1c). macOS 27.0 beta adds the missing
+clamp to both functions, confirming this is the intended bound.
+
+[5] Summary:
+Unprivileged user-space to kernel out-of-bounds read in AppleJPEGDriver via an unchecked attacker-
+controlled memmove length, reachable with a single IOKit call and no special privileges.
+
+[6] Steps to Reproduce:
+1. Build:  clang -O1 -framework IOKit -framework CoreFoundation -o poc applejpeg_kernel_oob_poc.c
+2. Run as a normal user on Apple Silicon:  ./poc
+3. The process opens AppleJPEGDriver (selector 0 open), then calls selector 5 with
+   structure-input[0x30]=1 (vulnerable branch) and structure-input[0x7c]=0x10000 (copy length).
+4. The kernel performs the unbounded memmove and panics.
+
+[7] Expected Results:
+The driver should reject or clamp an out-of-range copy length; the call should fail cleanly with no
+kernel memory access outside the structure-input buffer.
+
+[8] Actual Results:
+Kernel data abort (panic). esr=0x96000007 (DFSC 0x7 translation fault, WnR=0 read), faulting on an
+unmapped page; the faulting memmove's caller is within com.apple.driver.AppleJPEGDriver
+(startDecoderExt). Panic log included (jpeg_panic_full.txt). Register state shows the attacker copy
+length (0x10000) and adjacent kernel memory contents captured mid-copy.
+
+[9] OS Version:
+Vulnerable on current shipping macOS 26.5.1 (25F80), AppleJPEGDriver 7.7.9 (static-confirmed).
+Panic captured on macOS 26.4.1 (25E253), Mac16,5 / Apple M4 (T6041), same AppleJPEGDriver 7.7.9.
+macOS 27.0 beta (26A5353q) adds the bound (fixed).
+
+[10] WebKit version: N/A
+
+[11] POCs + logs (zip): applejpeg_oob_20260614/
+  applejpeg_kernel_oob_poc.c  (minimal PoC)
+  applejpeg_poc.c             (instrumented PoC used during validation)
+  jpeg_panic_full.txt         (kernel panic report)
+  VERSION_SCOPE.txt           (26.5.1 vulnerable / 27 fixed disasm)
+  SHA256SUMS

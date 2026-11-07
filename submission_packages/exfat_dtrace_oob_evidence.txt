@@ -1,0 +1,27 @@
+# exFAT _exfat_bitmap_map returns pointers PAST base+0x2000 (declared 8192-byte bitmap) = OOB, macOS 27.0 26A5353q
+# base alloc then OOB window pointers:
+
+exfat_bitmap_map RET ptr=0xfffffe30b0a18000
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a000
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a004
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a008
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a00c
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a010
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a014
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a018
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a01c
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a020
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a024
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a028
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a02c
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a030
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a034
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a038
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a03c
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a040
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a044
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a048
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a04c
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a050
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a054
+exfat_bitmap_map RET ptr=0xfffffe30b0a1a058
